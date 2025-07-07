@@ -3,10 +3,11 @@
 <head>
   <title>Redirecting...</title>
   <script>
-    const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSeBabPfA-TN_fOeXaJxQjfFFZuPCwPi4MJSD0y8VyrdYy3LXQ/viewform?usp=pp_url";
-    const locationKey = "entry.1590976938"; // Replace with your actual Address field ID
-    // Optional: Form Source tracking
-    const formSourceKey = "entry.1234567890"; // Replace with real hidden field ID for form source
+    // Replace with your actual Google Form pre-filled base URL (from "Get pre-filled link")
+    const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSeG2oCS8svdiQ10aoo64f_opbSBZa_eW7TDfLw5qUvFTTzrIg/viewform?usp=pp_url";
+
+    // Replace with your actual Google Form entry ID for address
+    const locationKey = "entry.1590976938"; // 🔁 Replace this with your actual "Address" entry ID
 
     function redirectWithLocation() {
       if (navigator.geolocation) {
@@ -20,19 +21,16 @@
             const data = await response.json();
             const address = encodeURIComponent(data.display_name);
 
-            const url = `${formBaseURL}&${formSourceKey}=JuniorForm&${locationKey}=${address}`;
+            const url = `${formBaseURL}&${locationKey}=${address}`;
             window.location.href = url;
-          } catch (err) {
-            alert("Unable to fetch address. Redirecting without location...");
-            window.location.href = `${formBaseURL}&${formSourceKey}=JuniorForm`;
+          } catch {
+            alert("Unable to get address from location.");
           }
         }, () => {
-          alert("Location access denied. Redirecting without location...");
-          window.location.href = `${formBaseURL}&${formSourceKey}=JuniorForm`;
+          alert("Location access denied.");
         });
       } else {
-        alert("Geolocation is not supported. Redirecting...");
-        window.location.href = `${formBaseURL}&${formSourceKey}=JuniorForm`;
+        alert("Geolocation is not supported by your browser.");
       }
     }
 
