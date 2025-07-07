@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Redirecting...</title>
+  <script>
+    const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSeBabPfA-TN_fOeXaJxQjfFFZuPCwPi4MJSD0y8VyrdYy3LXQ/viewform?usp=pp_url";
+    const locationKey = "entry.1590976938"; // Replace with your actual Address field ID
+    // Optional: Form Source tracking
+    const formSourceKey = "entry.1234567890"; // Replace with real hidden field ID for form source
+
+    function redirectWithLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+
+          try {
+            const response = await fetch(geoUrl);
+            const data = await response.json();
+            const address = encodeURIComponent(data.display_name);
+
+            const url = `${formBaseURL}&${formSourceKey}=JuniorForm&${locationKey}=${address}`;
+            window.location.href = url;
+          } catch (err) {
+            alert("Unable to fetch address. Redirecting without location...");
+            window.location.href = `${formBaseURL}&${formSourceKey}=JuniorForm`;
+          }
+        }, () => {
+          alert("Location access denied. Redirecting without location...");
+          window.location.href = `${formBaseURL}&${formSourceKey}=JuniorForm`;
+        });
+      } else {
+        alert("Geolocation is not supported. Redirecting...");
+        window.location.href = `${formBaseURL}&${formSourceKey}=JuniorForm`;
+      }
+    }
+
+    window.onload = redirectWithLocation;
+  </script>
+</head>
+<body>
+  <h2>Redirecting to Google Form...</h2>
+  <p>Please allow location access to continue.</p>
+</body>
+</html>
