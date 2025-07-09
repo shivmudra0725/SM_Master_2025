@@ -2,43 +2,109 @@
 <html>
 <head>
   <title>Redirecting...</title>
-  <script>
-    // Replace with your actual Google Form pre-filled base URL (from "Get pre-filled link")
-    const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSdiEwFg8aDVhOtGwElNb-Zq6K-dxA7-cEuqET9wlUozJuX7aA/viewform?usp=pp_url";
-
-    // Replace with your actual Google Form entry ID for address
-    const locationKey = "entry.1473154096"; // 🔁 Replace this with your actual "Address" entry ID
-
-    function redirectWithLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
-          const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
-
-          try {
-            const response = await fetch(geoUrl);
-            const data = await response.json();
-            const address = encodeURIComponent(data.display_name);
-
-            const url = `${formBaseURL}&${locationKey}=${address}`;
-            window.location.href = url;
-          } catch {
-            alert("Unable to get address from location.");
-          }
-        }, () => {
-          alert("Location access denied.");
-        });
-      } else {
-        alert("Geolocation is not supported by your browser.");
-      }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      text-align: center;
     }
-
-    window.onload = redirectWithLocation;
-  </script>
+    h2 {
+      color: #333;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
 </head>
 <body>
   <h2>Redirecting to Google Form...</h2>
   <p>Please allow location access to continue.</p>
+
+  <script>
+    const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSc8qrrhwtNaHHriKQOpMFu9TmGw3PwEbZzsWugSc2Ctc1LW0Q/viewform?usp=pp_url";
+    const locationKey = "entry.1473154096";
+    const allowedLat = 18.45288940909981;
+    const allowedLng = 73.81136842882728;
+    const allowedRadiusInMeters = 100;
+
+    function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000; // Radius of Earth in meters
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function redirectWithLocation() {
+      if (!navigator.geolocation) {
+        showMessage("❌ Geolocation is not supported by your browser.");
+        return;
+      }
+
+      showMessage("📍 Fetching your location, please wait...");
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const accuracy = pos.coords.accuracy;
+
+          console.log(`Lat: ${lat}, Lon: ${lon}, Accuracy: ${accuracy}m`);
+
+          const distance = getDistanceFromLatLonInMeters(lat, lon, allowedLat, allowedLng);
+          console.log(`Distance from target: ${distance} meters`);
+
+          if (distance <= allowedRadiusInMeters + accuracy) {
+            const locationValue = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+            const url = `${formBaseURL}&${locationKey}=${encodeURIComponent(locationValue)}`;
+            window.location.href = url;
+          } else {
+            showMessage("🚫 You are outside the allowed location zone.");
+          }
+        },
+        (err) => {
+          if (err.code === 1) {
+            showMessage("⚠️ Location permission denied.<br><button onclick='retry()'>Try Again</button>");
+          } else if (err.code === 2) {
+            showMessage("⚠️ Location unavailable.<br><button onclick='retry()'>Try Again</button>");
+          } else if (err.code === 3) {
+            showMessage("⚠️ Location request timed out.<br><button onclick='retry()'>Try Again</button>");
+          } else {
+            showMessage("⚠️ Unknown error occurred.<br><button onclick='retry()'>Try Again</button>");
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function showMessage(msg) {
+      document.body.innerHTML = `<h2>${msg}</h2>`;
+    }
+
+    function retry() {
+      location.reload();
+    }
+
+    window.onload = redirectWithLocation;
+  </script>
 </body>
 </html>
