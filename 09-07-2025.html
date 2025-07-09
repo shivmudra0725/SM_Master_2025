@@ -3,28 +3,45 @@
 <head>
   <title>Redirecting...</title>
   <script>
-    // Replace with your actual Google Form pre-filled base URL (from "Get pre-filled link")
-    const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSf0aenB4sj9mbaAWm3ELp_1O0JGrBt-idE5ro-1hx4d8w3Nfw/viewform?usp=pp_url";
+    // Google Form base URL (use pre-filled form base URL)
+    const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSczaKxg_f7CGd6J0Q9c-S2u3403MclRfQpr8cyh_lHLYir7uw/viewform?usp=pp_url";
 
-    // Replace with your actual Google Form entry ID for address
-    const locationKey = "entry.1473154096"; // 🔁 Replace this with your actual "Address" entry ID
+    // Replace with your actual Google Form field ID for "Location"
+    const locationKey = "entry.1473154096";
+
+    // Set your allowed coordinates (example: school/office)
+    const allowedLat = 18.464669;
+    const allowedLng = 73.834913;
+    const allowedRadiusInMeters = 100; // 100m radius
+
+    // Calculate distance using Haversine formula
+    function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000; // Radius of the earth in meters
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
 
     function redirectWithLocation() {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
+        navigator.geolocation.getCurrentPosition((pos) => {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-          const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
 
-          try {
-            const response = await fetch(geoUrl);
-            const data = await response.json();
-            const address = encodeURIComponent(data.display_name);
+          const distance = getDistanceFromLatLonInMeters(lat, lon, allowedLat, allowedLng);
 
-            const url = `${formBaseURL}&${locationKey}=${address}`;
+          if (distance <= allowedRadiusInMeters) {
+            // Send only lat,lon to form
+            const locationValue = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+            const url = `${formBaseURL}&${locationKey}=${encodeURIComponent(locationValue)}`;
             window.location.href = url;
-          } catch {
-            alert("Unable to get address from location.");
+          } else {
+            document.body.innerHTML = "<h2 style='color:red;'>You are outside the allowed location zone.</h2>";
           }
         }, () => {
           alert("Location access denied.");
