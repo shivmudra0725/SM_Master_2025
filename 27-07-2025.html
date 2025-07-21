@@ -3,29 +3,21 @@
 <head>
   <title>Redirecting...</title>
   <script>
-    // Replace with your actual Google Form pre-filled base URL (from "Get pre-filled link")
+    // Your actual Google Form pre-filled base URL
     const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSd1-fS93AC8rp_7Gjb7IafXDycvVgyNoWgwXvXZfTxsZx1W2Q/viewform?usp=pp_url";
 
-    // Replace with your actual Google Form entry ID for address
-    const locationKey = "entry.1473154096"; // 🔁 Replace this with your actual "Address" entry ID
+    // Location field entry ID — stays same
+    const locationKey = "entry.1473154096";
 
     function redirectWithLocation() {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
+        navigator.geolocation.getCurrentPosition((pos) => {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-          const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
 
-          try {
-            const response = await fetch(geoUrl);
-            const data = await response.json();
-            const address = encodeURIComponent(data.display_name);
-
-            const url = `${formBaseURL}&${locationKey}=${address}`;
-            window.location.href = url;
-          } catch {
-            alert("Unable to get address from location.");
-          }
+          const locationValue = encodeURIComponent(`${lat}, ${lon}`);
+          const url = `${formBaseURL}&${locationKey}=${locationValue}`;
+          window.location.href = url;
         }, () => {
           alert("Location access denied.");
         });
